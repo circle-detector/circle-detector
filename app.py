@@ -1,20 +1,15 @@
-
 import streamlit as st
 import numpy as np
 import cv2
-from io import BytesIO
 from PIL import Image
-import requests
 
-st.title("تحليل صور Sentinel-2 وعد الدوائر")
+st.title("عدّ الدوائر من صورة مرفوعة")
 
 st.markdown("""
-🎯 هذا التطبيق يتيح لك:
-- لصق **رابط مباشر لصورة من Sentinel Hub (EO Browser)**
-- تحليل الصورة لاكتشاف وعدّ **الدوائر الزراعية**
-- لا حاجة لأي API Key
+📸 قم برفع صورة (من جهازك) لتحليلها واكتشاف وعدّ الدوائر الزراعية.
 """)
-image_url = st.text_input("📥 أدخل رابط الصورة (JPG/PNG) من EO Browser أو مصدر آخر")
+
+uploaded_file = st.file_uploader("📥 اختر صورة (JPG / PNG)", type=["jpg", "jpeg", "png"])
 
 def detect_circles(image_pil):
     image = np.array(image_pil.convert("RGB"))
@@ -34,16 +29,12 @@ def detect_circles(image_pil):
     output_image = Image.fromarray(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
     return count, output_image
 
-if st.button("🔍 تحليل الصورة"):
-    if image_url:
-        try:
-            response = requests.get(image_url)
-            image = Image.open(BytesIO(response.content))
-            st.image(image, caption="الصورة الأصلية", use_column_width=True)
-            count, result_image = detect_circles(image)
-            st.image(result_image, caption=f"الدوائر المكتشفة: {count}", use_column_width=True)
-            st.success(f"✅ عدد الدوائر المكتشفة: {count}")
-        except Exception as e:
-            st.error(f"حدث خطأ في تحميل أو معالجة الصورة: {e}")
-    else:
-        st.warning("يرجى إدخال رابط صورة صالح.")
+if uploaded_file is not None:
+    try:
+        image = Image.open(uploaded_file)
+        st.image(image, caption="الصورة الأصلية", use_column_width=True)
+        count, result_image = detect_circles(image)
+        st.image(result_image, caption=f"الدوائر المكتشفة: {count}", use_column_width=True)
+        st.success(f"✅ عدد الدوائر المكتشفة: {count}")
+    except Exception as e:
+        st.error(f"حدث خطأ في معالجة الصورة: {e}")
